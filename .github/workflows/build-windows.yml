@@ -18,9 +18,8 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Install CMake
-        run: |
-          choco install cmake --no-progress
-          
+        run: choco install cmake --no-progress -y
+      
       - name: Install Qt 6.5.3
         uses: jurplel/install-qt-action@v3
         with:
@@ -28,13 +27,18 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2019_64'
-          cache: 'true'
+          cache: 'false'
       
-      - name: Set Qt Environment Variable
+      - name: Verify Qt Installation
         run: |
-          $QtPath = "C:\Qt\6.5.3\msvc2019_64"
-          echo "QTDIR=$QtPath" >> $env:GITHUB_ENV
-          echo "Qt5_DIR=$QtPath\lib\cmake\Qt5" >> $env:GITHUB_ENV
+          $QtPath = "D:\a\CSNZ_ServerX\Qt\6.5.3\msvc2019_64"
+          if (Test-Path $QtPath) {
+            Write-Host "Qt found at: $QtPath"
+            echo "QTDIR=$QtPath" >> $env:GITHUB_ENV
+          } else {
+            Write-Host "Qt path does not exist"
+            exit 1
+          }
         shell: powershell
       
       - name: Configure CMake
@@ -46,7 +50,7 @@ jobs:
             -A x64
         shell: powershell
       
-      - name: Build
+      - name: Build Project
         run: |
           cmake --build build --config ${{ matrix.build-type }} --parallel $env:NUMBER_OF_PROCESSORS
         shell: powershell
