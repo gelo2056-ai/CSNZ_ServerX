@@ -22,10 +22,10 @@ jobs:
           Write-Host "Current directory: $(Get-Location)"
           Write-Host "Directory contents:"
           Get-ChildItem -Path . | Format-Table Name, PSIsContainer
-          if (Test-Path "CMakeLists.txt") {
-            Write-Host "✓ CMakeLists.txt found"
+          if (Test-Path "src/CMakeLists.txt") {
+            Write-Host "✓ src/CMakeLists.txt found"
           } else {
-            Write-Host "✗ CMakeLists.txt NOT found"
+            Write-Host "✗ src/CMakeLists.txt NOT found"
             exit 1
           }
         shell: powershell
@@ -56,19 +56,17 @@ jobs:
       
       - name: Configure CMake
         run: |
-          cmake -B build `
+          cmake -B build -S src `
             -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} `
             -DCMAKE_PREFIX_PATH="${{ env.QTDIR }}" `
             -G "Visual Studio 16 2019" `
             -A x64
         shell: powershell
-        working-directory: ${{ github.workspace }}
       
       - name: Build Project
         run: |
           cmake --build build --config ${{ matrix.build-type }} --parallel $env:NUMBER_OF_PROCESSORS
         shell: powershell
-        working-directory: ${{ github.workspace }}
       
       - name: Upload Build Artifacts
         if: always()
