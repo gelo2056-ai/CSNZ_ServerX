@@ -1,0 +1,48 @@
+name: Build C++ Project
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+# ЭТА СТРОКА ИСПРАВЛЯЕТ ПРЕДУПРЕЖДЕНИЕ О NODE.JS 20
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    # Уведомление о windows-latest — это просто информация от GitHub, 
+    # оставляем windows-latest, сервер обновится автоматически.
+    runs-on: windows-latest
+    
+    strategy:
+      # Отключаем fail-fast. Теперь если Debug выдаст ошибку, 
+      # сборка Release НЕ будет отменена и продолжит работу.
+      fail-fast: false 
+      matrix:
+        build_type: [Debug, Release]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{github.workspace}}/build
+
+    - name: Configure CMake
+      working-directory: ${{github.workspace}}/build
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+    - name: Build
+      working-directory: ${{github.workspace}}/build
+      # Сборка самого кода
+      run: cmake --build . --config ${{ matrix.build_type }}
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      # Этот шаг выполнится только если сборка (предыдущий шаг) прошла успешно
+      if: success() 
+      with:
+        name: CSNZ_ServerX-${{ matrix.build_type }}
+        path: build/
