@@ -17,6 +17,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Check project structure
+        run: |
+          Write-Host "Current directory: $(Get-Location)"
+          Write-Host "Directory contents:"
+          Get-ChildItem -Path . | Format-Table Name, PSIsContainer
+          if (Test-Path "CMakeLists.txt") {
+            Write-Host "✓ CMakeLists.txt found"
+          } else {
+            Write-Host "✗ CMakeLists.txt NOT found"
+            exit 1
+          }
+        shell: powershell
+      
       - name: Install CMake
         run: choco install cmake --no-progress -y
       
@@ -33,10 +46,10 @@ jobs:
         run: |
           $QtPath = "D:\a\CSNZ_ServerX\Qt\6.5.3\msvc2019_64"
           if (Test-Path $QtPath) {
-            Write-Host "Qt found at: $QtPath"
+            Write-Host "✓ Qt found at: $QtPath"
             echo "QTDIR=$QtPath" >> $env:GITHUB_ENV
           } else {
-            Write-Host "Qt path does not exist"
+            Write-Host "✗ Qt path does not exist"
             exit 1
           }
         shell: powershell
@@ -49,11 +62,13 @@ jobs:
             -G "Visual Studio 16 2019" `
             -A x64
         shell: powershell
+        working-directory: ${{ github.workspace }}
       
       - name: Build Project
         run: |
           cmake --build build --config ${{ matrix.build-type }} --parallel $env:NUMBER_OF_PROCESSORS
         shell: powershell
+        working-directory: ${{ github.workspace }}
       
       - name: Upload Build Artifacts
         if: always()
